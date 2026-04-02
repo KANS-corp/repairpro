@@ -989,14 +989,23 @@ async function deleteItem(coll,id) {
   console.log(`📦 DEBUG - Items en local APRÈS: ${arr.length}`);
   SL(coll,arr);
 
-  // Firebase
+  // Firebase - Trouver le _id (ID Firebase) pour la suppression
   if(db) {
-    console.log(`☁️ DEBUG - Firebase connecté, suppression de l'ID: ${id}`);
-    try {
-      await deleteDoc(doc(db,coll,String(id)));
-      console.log('✅ Supprimé de Firebase:',id);
-    } catch(e) {
-      console.error('⚠️ Firebase delete failed:',e);
+    // Chercher l'item pour trouver son _id Firebase
+    const allItems = GL(coll,[]);
+    const itemToDelete = allItems.find(x => (x._id === id) || (x.id === id));
+    
+    if(itemToDelete && itemToDelete._id) {
+      const firebaseId = itemToDelete._id;
+      console.log(`☁️ DEBUG - Firebase connecté, suppression de l'ID Firebase: ${firebaseId}`);
+      try {
+        await deleteDoc(doc(db,coll,String(firebaseId)));
+        console.log('✅ Supprimé de Firebase:',firebaseId);
+      } catch(e) {
+        console.error('⚠️ Firebase delete failed:',e);
+      }
+    } else {
+      console.log('⚠️ DEBUG - Item non trouvé dans Firebase ou pas de _id');
     }
   } else {
     console.log('📴 DEBUG - Firebase NON connecté');
@@ -1514,7 +1523,7 @@ window.chargerClients = async function() {
       <td style="font-family:var(--font-mono);font-size:.77rem;">${c.tel||'—'}</td>
       <td style="color:var(--muted);font-size:.77rem;">${c.email||'—'}</td>
       <td><span class="badge badge-blue">${reps.length} rép.</span></td>
-      <td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();supprimerClient('${c.id||c._id}','${c.nom}')">🗑️</button></td>
+      <td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();supprimerClient('${c._id||c.id}','${c.nom}')">🗑️</button></td>
     </tr>`;
   }).join('');
 
