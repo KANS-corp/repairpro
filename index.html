@@ -636,7 +636,7 @@ import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, 
 // ════════════════════════════════════════
 // VARIABLES GLOBALES
 // ════════════════════════════════════════
-const APP_VERSION = '2.0'; // Incrémenter pour forcer la mise à jour
+const APP_VERSION = '2.5'; // Version de vérification du déploiement
 
 const DEFAULT_PIECES = [
   {key:'ecran',icon:'📱',label:'Écran'},
@@ -969,9 +969,6 @@ async function deleteItem(coll,id) {
   
   // IMPORTANT: Trouver le _id Firebase AVANT de supprimer du local
   let arr=GL(coll,[]);
-  const itemToDelete = arr.find(x => (x._id === id) || (x.id === id));
-  const firebaseId = itemToDelete ? itemToDelete._id : null;
-  
   console.log(`📦 DEBUG - Items en local AVANT: ${arr.length}`);
   
   // DEBUG: Afficher tous les IDs
@@ -980,6 +977,15 @@ async function deleteItem(coll,id) {
   });
   
   console.log(`🔍 DEBUG - On cherche à supprimer l'ID: "${id}"`);
+  
+  const itemToDelete = arr.find(x => (x._id === id) || (x.id === id));
+  console.log(`🔍 DEBUG - itemToDelete trouvé ?`, itemToDelete ? 'OUI' : 'NON');
+  if(itemToDelete) {
+    console.log(`   → _id="${itemToDelete._id}", id="${itemToDelete.id}"`);
+  }
+  
+  const firebaseId = itemToDelete ? itemToDelete._id : null;
+  console.log(`🔍 DEBUG - firebaseId extrait: "${firebaseId}"`);
   
   arr=arr.filter(x=>{
     // Comparer avec _id ET id
