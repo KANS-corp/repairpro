@@ -967,8 +967,11 @@ async function fetchAll(coll,cache) {
 async function deleteItem(coll,id) {
   console.log(`🗑️ DEBUG - deleteItem appelé: collection="${coll}", id="${id}"`);
   
-  // Supprimer du local
+  // IMPORTANT: Trouver le _id Firebase AVANT de supprimer du local
   let arr=GL(coll,[]);
+  const itemToDelete = arr.find(x => (x._id === id) || (x.id === id));
+  const firebaseId = itemToDelete ? itemToDelete._id : null;
+  
   console.log(`📦 DEBUG - Items en local AVANT: ${arr.length}`);
   
   // DEBUG: Afficher tous les IDs
@@ -989,14 +992,9 @@ async function deleteItem(coll,id) {
   console.log(`📦 DEBUG - Items en local APRÈS: ${arr.length}`);
   SL(coll,arr);
 
-  // Firebase - Trouver le _id (ID Firebase) pour la suppression
+  // Firebase - Utiliser le _id qu'on a trouvé AVANT
   if(db) {
-    // Chercher l'item pour trouver son _id Firebase
-    const allItems = GL(coll,[]);
-    const itemToDelete = allItems.find(x => (x._id === id) || (x.id === id));
-    
-    if(itemToDelete && itemToDelete._id) {
-      const firebaseId = itemToDelete._id;
+    if(firebaseId) {
       console.log(`☁️ DEBUG - Firebase connecté, suppression de l'ID Firebase: ${firebaseId}`);
       try {
         await deleteDoc(doc(db,coll,String(firebaseId)));
@@ -1005,7 +1003,7 @@ async function deleteItem(coll,id) {
         console.error('⚠️ Firebase delete failed:',e);
       }
     } else {
-      console.log('⚠️ DEBUG - Item non trouvé dans Firebase ou pas de _id');
+      console.log('⚠️ DEBUG - Pas de _id Firebase trouvé pour cet item');
     }
   } else {
     console.log('📴 DEBUG - Firebase NON connecté');
