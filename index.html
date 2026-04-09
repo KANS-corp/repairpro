@@ -252,16 +252,6 @@
           <input type="number" id="rep-cout-pieces" placeholder="0.00" step="0.01" oninput="calculerBeneficeReparation()">
         </div>
       </div>
-      <div class="grid-2" style="margin-top:12px;">
-        <div class="field">
-          <label>Frais annexes 1 (€)</label>
-          <input type="number" id="rep-frais-1" placeholder="0.00" step="0.01" value="0" oninput="calculerBeneficeReparation()">
-        </div>
-        <div class="field">
-          <label>Frais annexes 2 (€)</label>
-          <input type="number" id="rep-frais-2" placeholder="0.00" step="0.01" value="0" oninput="calculerBeneficeReparation()">
-        </div>
-      </div>
       <div class="result-box">
         <div>
           <div class="result-label">Bénéfice</div>
@@ -551,7 +541,7 @@
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Date</th><th>Modèle</th><th>Pièces</th><th>Prix</th><th>Frais 1</th><th>Frais 2</th><th>Note</th></tr>
+              <tr><th>Date</th><th>Modèle</th><th>Pièces</th><th>Prix</th><th>Note</th></tr>
             </thead>
             <tbody id="cd-tbody"></tbody>
           </table>
@@ -646,7 +636,7 @@ import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, 
 // ════════════════════════════════════════
 // VARIABLES GLOBALES
 // ════════════════════════════════════════
-const APP_VERSION = '2.6'; // Ajout frais annexes 1 et 2
+const APP_VERSION = '2.5'; // Version de vérification du déploiement
 
 const DEFAULT_PIECES = [
   {key:'ecran',icon:'📱',label:'Écran'},
@@ -1081,9 +1071,7 @@ function regenererSelectClients() {
 window.calculerBeneficeReparation = function() {
   const client=parseFloat(document.getElementById('rep-prix-client').value)||0;
   const cout=parseFloat(document.getElementById('rep-cout-pieces').value)||0;
-  const frais1=parseFloat(document.getElementById('rep-frais-1').value)||0;
-  const frais2=parseFloat(document.getElementById('rep-frais-2').value)||0;
-  const benef=client-cout-frais1-frais2;
+  const benef=client-cout;
   document.getElementById('rep-benef').textContent=fmt(benef);
   document.getElementById('rep-benef').className='result-value '+(benef>=0?'benef-positive':'benef-negative');
 };
@@ -1093,8 +1081,6 @@ window.enregistrerReparation = async function() {
   const modele=document.getElementById('rep-modele').value;
   const prixClient=parseFloat(document.getElementById('rep-prix-client').value)||0;
   const coutPieces=parseFloat(document.getElementById('rep-cout-pieces').value)||0;
-  const frais1=parseFloat(document.getElementById('rep-frais-1').value)||0;
-  const frais2=parseFloat(document.getElementById('rep-frais-2').value)||0;
   const note=document.getElementById('rep-note').value.trim();
   const clientId=document.getElementById('rep-client').value;
 
@@ -1112,9 +1098,7 @@ window.enregistrerReparation = async function() {
     modele,
     prixClient,
     coutPieces,
-    frais1,
-    frais2,
-    benef:prixClient-coutPieces-frais1-frais2,
+    benef:prixClient-coutPieces,
     piecesUtilisees,
     note,
     clientId:clientId||null
@@ -1616,8 +1600,6 @@ window.voirClient = async function(cId) {
       <td>${i.modele}</td>
       <td>${ps||'—'}</td>
       <td style="font-family:var(--font-mono);">${fmt(i.prixClient||0)}</td>
-      <td style="font-family:var(--font-mono);color:var(--yellow);">${fmt(i.frais1||0)}</td>
-      <td style="font-family:var(--font-mono);color:var(--yellow);">${fmt(i.frais2||0)}</td>
       <td style="color:var(--muted);font-size:.76rem;">${i.note||'—'}</td>
     </tr>`;
   }).join('');
