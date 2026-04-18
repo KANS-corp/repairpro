@@ -123,6 +123,20 @@
   .modal-title { font-size:1.05rem; font-weight:800; margin-bottom:7px; }
   .modal-msg { font-size:.83rem; color:var(--muted); margin-bottom:22px; line-height:1.6; }
   .modal-actions { display:flex; gap:10px; justify-content:flex-end; }
+  
+  /* Modal d'édition des réparations */
+  #edit-modal { position:fixed; inset:0; background:#000000bb; display:flex; align-items:center; justify-content:center; z-index:9999; opacity:0; pointer-events:none; transition:opacity .2s; padding:20px; overflow-y:auto; }
+  #edit-modal.open { opacity:1; pointer-events:all; }
+  #edit-modal .modal-box { max-width:700px; max-height:90vh; overflow-y:auto; }
+  #edit-modal.open .modal-box { transform:scale(1); }
+  
+  /* Modal d'édition des clients */
+  #edit-client-modal { position:fixed; inset:0; background:#000000bb; display:flex; align-items:center; justify-content:center; z-index:9999; opacity:0; pointer-events:none; transition:opacity .2s; }
+  #edit-client-modal.open { opacity:1; pointer-events:all; }
+  #edit-client-modal.open .modal-box { transform:scale(1); }
+  
+  /* Séparateur entre boutons d'action */
+  .btn-separator { display:inline-block; width:1px; height:20px; background:var(--border); margin:0 8px; vertical-align:middle; }
 
   .spinner { width:17px; height:17px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; display:inline-block; }
   .loading-row td { text-align:center; color:var(--muted); padding:34px; }
@@ -543,7 +557,10 @@
             </div>
           </div>
         </div>
-        <button class="btn btn-danger" id="cd-delete-btn" style="margin-top:14px;">🗑️ Supprimer ce client</button>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn btn-primary" id="cd-edit-btn" style="flex:1;">✏️ Modifier les infos</button>
+          <button class="btn btn-danger" id="cd-delete-btn" style="flex:1;">🗑️ Supprimer ce client</button>
+        </div>
       </div>
 
       <div class="card">
@@ -551,7 +568,7 @@
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Date</th><th>Modèle</th><th>Pièces</th><th>Prix</th><th>Frais 1</th><th>Frais 2</th><th>Note</th></tr>
+              <tr><th>Date</th><th>Modèle</th><th>Pièces</th><th>Prix</th><th>Frais 1</th><th>Frais 2</th><th>Note</th><th>Actions</th></tr>
             </thead>
             <tbody id="cd-tbody"></tbody>
           </table>
@@ -624,6 +641,106 @@
 
 <div id="toast"></div>
 
+<!-- Modal d'édition des réparations -->
+<div id="edit-modal">
+  <div class="modal-box">
+    <div style="font-size:1.3rem;font-weight:800;margin-bottom:20px;">✏️ Modifier la réparation</div>
+    
+    <div class="field" style="margin-bottom:14px;">
+      <label>Date</label>
+      <input type="date" id="edit-date">
+    </div>
+    
+    <div class="field" style="margin-bottom:14px;">
+      <label>Modèle</label>
+      <select id="edit-modele"></select>
+    </div>
+    
+    <div class="field" style="margin-bottom:14px;">
+      <label>Client (optionnel)</label>
+      <select id="edit-client">
+        <option value="">Aucun client</option>
+      </select>
+    </div>
+    
+    <div class="field" style="margin-bottom:14px;">
+      <label>Pièces utilisées</label>
+      <div class="check-grid" id="edit-pieces-grid"></div>
+    </div>
+    
+    <div class="grid-2" style="margin-bottom:14px;">
+      <div class="field">
+        <label>Prix facturé au client (€)</label>
+        <input type="number" id="edit-prix-client" step="0.01" oninput="calculerBeneficeEdit()">
+      </div>
+      <div class="field">
+        <label>Coût total des pièces (€)</label>
+        <input type="number" id="edit-cout-pieces" step="0.01" oninput="calculerBeneficeEdit()">
+      </div>
+    </div>
+    
+    <div class="grid-2" style="margin-bottom:14px;">
+      <div class="field">
+        <label>Frais annexes 1 (€)</label>
+        <input type="number" id="edit-frais-1" step="0.01" value="0" oninput="calculerBeneficeEdit()">
+      </div>
+      <div class="field">
+        <label>Frais annexes 2 (€)</label>
+        <input type="number" id="edit-frais-2" step="0.01" value="0" oninput="calculerBeneficeEdit()">
+      </div>
+    </div>
+    
+    <div class="field" style="margin-bottom:14px;">
+      <label>Note (optionnel)</label>
+      <textarea id="edit-note" rows="2" placeholder="Ex: Écran cassé suite à chute..."></textarea>
+    </div>
+    
+    <div class="result-box" style="margin-top:16px;">
+      <div>
+        <div class="result-label">Bénéfice</div>
+        <div class="result-value benef-positive" id="edit-benef">0,00€</div>
+      </div>
+    </div>
+    
+    <div class="modal-actions" style="margin-top:20px;">
+      <button class="btn btn-ghost" onclick="fermerEditModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="sauvegarderEditReparation()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal d'édition des clients -->
+<div id="edit-client-modal">
+  <div class="modal-box">
+    <div style="font-size:1.3rem;font-weight:800;margin-bottom:20px;">✏️ Modifier le client</div>
+    
+    <div class="field" style="margin-bottom:14px;">
+      <label>Nom complet</label>
+      <input type="text" id="edit-client-nom" placeholder="Ex: Jean Dupont">
+    </div>
+    
+    <div class="field" style="margin-bottom:14px;">
+      <label>Téléphone</label>
+      <input type="tel" id="edit-client-tel" placeholder="Ex: 06 12 34 56 78">
+    </div>
+    
+    <div class="field" style="margin-bottom:14px;">
+      <label>Email</label>
+      <input type="email" id="edit-client-email" placeholder="Ex: jean@example.com">
+    </div>
+    
+    <div class="field" style="margin-bottom:14px;">
+      <label>Note (optionnel)</label>
+      <textarea id="edit-client-note" rows="2" placeholder="Informations supplémentaires..."></textarea>
+    </div>
+    
+    <div class="modal-actions" style="margin-top:20px;">
+      <button class="btn btn-ghost" onclick="fermerEditClientModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="sauvegarderEditClient()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
 <div id="confirm-modal">
   <div class="modal-box">
     <div class="modal-icon" id="modal-icon"></div>
@@ -646,7 +763,7 @@ import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, 
 // ════════════════════════════════════════
 // VARIABLES GLOBALES
 // ════════════════════════════════════════
-const APP_VERSION = '2.6'; // Ajout frais annexes 1 et 2
+const APP_VERSION = '2.7'; // Ajout fonction d'édition des réparations et clients
 
 const DEFAULT_PIECES = [
   {key:'ecran',icon:'📱',label:'Écran'},
@@ -1261,7 +1378,11 @@ window.chargerHistorique = async function() {
       <td style="font-family:var(--font-mono);color:var(--muted);">${fmt(i.coutPieces||0)}</td>
       <td style="font-family:var(--font-mono);color:${(i.benef||0)>=0?'var(--green)':'var(--accent2)'};">${fmt(i.benef||0)}</td>
       <td style="color:var(--muted);font-size:.76rem;">${i.note||'—'}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="supprimerReparation('${i._id||i.id}')">🗑️</button></td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="ouvrirEditModal('${i._id||i.id}')">✏️</button>
+        <span class="btn-separator">│</span>
+        <button class="btn btn-danger btn-sm" onclick="supprimerReparation('${i._id||i.id}')">🗑️</button>
+      </td>
     </tr>`;
   }).join('');
 };
@@ -1543,7 +1664,11 @@ window.chargerClients = async function() {
       <td style="font-family:var(--font-mono);font-size:.77rem;">${c.tel||'—'}</td>
       <td style="color:var(--muted);font-size:.77rem;">${c.email||'—'}</td>
       <td><span class="badge badge-blue">${reps.length} rép.</span></td>
-      <td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();supprimerClient('${c._id||c.id}','${c.nom}')">🗑️</button></td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();ouvrirEditClientModal('${c._id||c.id}')">✏️</button>
+        <span class="btn-separator">│</span>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();supprimerClient('${c._id||c.id}','${c.nom}')">🗑️</button>
+      </td>
     </tr>`;
   }).join('');
 
@@ -1603,6 +1728,7 @@ window.voirClient = async function(cId) {
   document.getElementById('cd-count').textContent=reps.length;
   document.getElementById('cd-total').textContent=fmt(td);
   document.getElementById('cd-last').textContent=reps.length?dateStr(reps[0].date):'—';
+  document.getElementById('cd-edit-btn').onclick=()=>ouvrirEditClientModal(cId);
   document.getElementById('cd-delete-btn').onclick=()=>supprimerClient(cId,c.nom);
   
   document.getElementById('cd-tbody').innerHTML=reps.map(i=>{
@@ -1619,6 +1745,11 @@ window.voirClient = async function(cId) {
       <td style="font-family:var(--font-mono);color:var(--yellow);">${fmt(i.frais1||0)}</td>
       <td style="font-family:var(--font-mono);color:var(--yellow);">${fmt(i.frais2||0)}</td>
       <td style="color:var(--muted);font-size:.76rem;">${i.note||'—'}</td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="ouvrirEditModal('${i._id||i.id}')">✏️</button>
+        <span class="btn-separator">│</span>
+        <button class="btn btn-danger btn-sm" onclick="supprimerReparation('${i._id||i.id}')">🗑️</button>
+      </td>
     </tr>`;
   }).join('');
   
@@ -1662,6 +1793,205 @@ window.supprimerClient = async function(cId,nom) {
   
   toast(`✅ ${nom} supprimé`);
   console.log('✅ DEBUG - Suppression terminée');
+};
+
+// ════════════════════════════════════════
+// ÉDITION DES RÉPARATIONS
+// ════════════════════════════════════════
+let repEnCoursEdition = null;
+
+window.ouvrirEditModal = function(repId) {
+  const hist = GL('historique', []);
+  const rep = hist.find(r => (r._id === repId) || (r.id === repId));
+  
+  if (!rep) {
+    toast('❌ Réparation non trouvée', false);
+    return;
+  }
+  
+  repEnCoursEdition = repId;
+  
+  // Remplir les champs
+  document.getElementById('edit-date').value = rep.date;
+  document.getElementById('edit-modele').value = rep.modele;
+  document.getElementById('edit-client').value = rep.clientId || '';
+  document.getElementById('edit-prix-client').value = rep.prixClient || 0;
+  document.getElementById('edit-cout-pieces').value = rep.coutPieces || 0;
+  document.getElementById('edit-frais-1').value = rep.frais1 || 0;
+  document.getElementById('edit-frais-2').value = rep.frais2 || 0;
+  document.getElementById('edit-note').value = rep.note || '';
+  
+  // Remplir le select modèle
+  const selectModele = document.getElementById('edit-modele');
+  selectModele.innerHTML = IPHONES.map(m => `<option value="${m}">${m}</option>`).join('');
+  selectModele.value = rep.modele;
+  
+  // Remplir le select client
+  const selectClient = document.getElementById('edit-client');
+  const clients = GL('clients', []);
+  selectClient.innerHTML = '<option value="">Aucun client</option>' + 
+    clients.map(c => `<option value="${c._id || c.id}">${c.nom}</option>`).join('');
+  selectClient.value = rep.clientId || '';
+  
+  // Remplir les pièces
+  const grid = document.getElementById('edit-pieces-grid');
+  grid.innerHTML = PIECES.map(p => `
+    <label class="check-item">
+      <input type="checkbox" id="edit-piece-${p.key}" ${(rep.piecesUtilisees || []).includes(p.key) ? 'checked' : ''}>
+      <span>${p.icon} ${p.label}</span>
+    </label>
+  `).join('');
+  
+  calculerBeneficeEdit();
+  document.getElementById('edit-modal').classList.add('open');
+};
+
+window.fermerEditModal = function() {
+  document.getElementById('edit-modal').classList.remove('open');
+  repEnCoursEdition = null;
+};
+
+window.calculerBeneficeEdit = function() {
+  const client = parseFloat(document.getElementById('edit-prix-client').value) || 0;
+  const cout = parseFloat(document.getElementById('edit-cout-pieces').value) || 0;
+  const frais1 = parseFloat(document.getElementById('edit-frais-1').value) || 0;
+  const frais2 = parseFloat(document.getElementById('edit-frais-2').value) || 0;
+  const benef = client - cout - frais1 - frais2;
+  document.getElementById('edit-benef').textContent = fmt(benef);
+  document.getElementById('edit-benef').className = 'result-value ' + (benef >= 0 ? 'benef-positive' : 'benef-negative');
+};
+
+window.sauvegarderEditReparation = async function() {
+  if (!repEnCoursEdition) return;
+  
+  const date = document.getElementById('edit-date').value;
+  const modele = document.getElementById('edit-modele').value;
+  const clientId = document.getElementById('edit-client').value;
+  const prixClient = parseFloat(document.getElementById('edit-prix-client').value) || 0;
+  const coutPieces = parseFloat(document.getElementById('edit-cout-pieces').value) || 0;
+  const frais1 = parseFloat(document.getElementById('edit-frais-1').value) || 0;
+  const frais2 = parseFloat(document.getElementById('edit-frais-2').value) || 0;
+  const note = document.getElementById('edit-note').value.trim();
+  
+  const piecesUtilisees = PIECES
+    .filter(p => document.getElementById('edit-piece-' + p.key)?.checked)
+    .map(p => p.key);
+  
+  const data = {
+    date,
+    modele,
+    prixClient,
+    coutPieces,
+    frais1,
+    frais2,
+    benef: prixClient - coutPieces - frais1 - frais2,
+    piecesUtilisees,
+    note,
+    clientId: clientId || null
+  };
+  
+  // Mettre à jour dans localStorage
+  let hist = GL('historique', []);
+  const index = hist.findIndex(r => (r._id === repEnCoursEdition) || (r.id === repEnCoursEdition));
+  
+  if (index !== -1) {
+    hist[index] = { ...hist[index], ...data };
+    SL('historique', hist);
+    
+    // Mettre à jour dans Firebase
+    if (db && hist[index]._id) {
+      try {
+        await updateDoc(doc(db, 'historique', hist[index]._id), data);
+      } catch(e) {
+        console.error('Erreur Firebase:', e);
+      }
+    }
+    
+    toast('✅ Réparation modifiée');
+    fermerEditModal();
+    
+    // Rafraîchir l'affichage
+    if (currentPage === 'historique') {
+      chargerHistorique();
+    } else if (currentPage === 'clients') {
+      // Si on est dans le détail d'un client, on rafraîchit
+      const detailVisible = document.getElementById('client-detail').style.display !== 'none';
+      if (detailVisible) {
+        const clientId = hist[index].clientId;
+        if (clientId) voirClient(clientId);
+      }
+    }
+  }
+};
+
+// ════════════════════════════════════════
+// ÉDITION DES CLIENTS
+// ════════════════════════════════════════
+let clientEnCoursEdition = null;
+
+window.ouvrirEditClientModal = function(clientId) {
+  const clients = GL('clients', []);
+  const client = clients.find(c => (c._id === clientId) || (c.id === clientId));
+  
+  if (!client) {
+    toast('❌ Client non trouvé', false);
+    return;
+  }
+  
+  clientEnCoursEdition = clientId;
+  
+  // Remplir les champs
+  document.getElementById('edit-client-nom').value = client.nom || '';
+  document.getElementById('edit-client-tel').value = client.tel || '';
+  document.getElementById('edit-client-email').value = client.email || '';
+  document.getElementById('edit-client-note').value = client.note || '';
+  
+  document.getElementById('edit-client-modal').classList.add('open');
+};
+
+window.fermerEditClientModal = function() {
+  document.getElementById('edit-client-modal').classList.remove('open');
+  clientEnCoursEdition = null;
+};
+
+window.sauvegarderEditClient = async function() {
+  if (!clientEnCoursEdition) return;
+  
+  const nom = document.getElementById('edit-client-nom').value.trim();
+  const tel = document.getElementById('edit-client-tel').value.trim();
+  const email = document.getElementById('edit-client-email').value.trim();
+  const note = document.getElementById('edit-client-note').value.trim();
+  
+  if (!nom) {
+    toast('❌ Le nom est requis', false);
+    return;
+  }
+  
+  const data = { nom, tel, email, note };
+  
+  // Mettre à jour dans localStorage
+  let clients = GL('clients', []);
+  const index = clients.findIndex(c => (c._id === clientEnCoursEdition) || (c.id === clientEnCoursEdition));
+  
+  if (index !== -1) {
+    clients[index] = { ...clients[index], ...data };
+    SL('clients', clients);
+    
+    // Mettre à jour dans Firebase
+    if (db && clients[index]._id) {
+      try {
+        await updateDoc(doc(db, 'clients', clients[index]._id), data);
+      } catch(e) {
+        console.error('Erreur Firebase:', e);
+      }
+    }
+    
+    toast('✅ Client modifié');
+    fermerEditClientModal();
+    
+    // Rafraîchir l'affichage
+    await chargerClients();
+  }
 };
 
 // ════════════════════════════════════════
