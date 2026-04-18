@@ -136,7 +136,7 @@
   #edit-client-modal.open .modal-box { transform:scale(1); }
   
   /* Séparateur entre boutons d'action */
-  .btn-separator { display:inline-block; width:1px; height:20px; background:var(--border); margin:0 8px; vertical-align:middle; }
+  .btn-separator { display:inline-block; width:1px; height:18px; background:rgba(255,255,255,0.2); margin:0 6px; vertical-align:middle; }
 
   .spinner { width:17px; height:17px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; display:inline-block; }
   .loading-row td { text-align:center; color:var(--muted); padding:34px; }
@@ -1378,9 +1378,9 @@ window.chargerHistorique = async function() {
       <td style="font-family:var(--font-mono);color:var(--muted);">${fmt(i.coutPieces||0)}</td>
       <td style="font-family:var(--font-mono);color:${(i.benef||0)>=0?'var(--green)':'var(--accent2)'};">${fmt(i.benef||0)}</td>
       <td style="color:var(--muted);font-size:.76rem;">${i.note||'—'}</td>
-      <td>
+      <td style="white-space:nowrap;">
         <button class="btn btn-primary btn-sm" onclick="ouvrirEditModal('${i._id||i.id}')">✏️</button>
-        <span class="btn-separator">│</span>
+        <span class="btn-separator"></span>
         <button class="btn btn-danger btn-sm" onclick="supprimerReparation('${i._id||i.id}')">🗑️</button>
       </td>
     </tr>`;
@@ -1664,9 +1664,9 @@ window.chargerClients = async function() {
       <td style="font-family:var(--font-mono);font-size:.77rem;">${c.tel||'—'}</td>
       <td style="color:var(--muted);font-size:.77rem;">${c.email||'—'}</td>
       <td><span class="badge badge-blue">${reps.length} rép.</span></td>
-      <td>
+      <td style="white-space:nowrap;">
         <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();ouvrirEditClientModal('${c._id||c.id}')">✏️</button>
-        <span class="btn-separator">│</span>
+        <span class="btn-separator"></span>
         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();supprimerClient('${c._id||c.id}','${c.nom}')">🗑️</button>
       </td>
     </tr>`;
@@ -1745,9 +1745,9 @@ window.voirClient = async function(cId) {
       <td style="font-family:var(--font-mono);color:var(--yellow);">${fmt(i.frais1||0)}</td>
       <td style="font-family:var(--font-mono);color:var(--yellow);">${fmt(i.frais2||0)}</td>
       <td style="color:var(--muted);font-size:.76rem;">${i.note||'—'}</td>
-      <td>
+      <td style="white-space:nowrap;">
         <button class="btn btn-primary btn-sm" onclick="ouvrirEditModal('${i._id||i.id}')">✏️</button>
-        <span class="btn-separator">│</span>
+        <span class="btn-separator"></span>
         <button class="btn btn-danger btn-sm" onclick="supprimerReparation('${i._id||i.id}')">🗑️</button>
       </td>
     </tr>`;
@@ -1823,7 +1823,8 @@ window.ouvrirEditModal = function(repId) {
   
   // Remplir le select modèle
   const selectModele = document.getElementById('edit-modele');
-  selectModele.innerHTML = IPHONES.map(m => `<option value="${m}">${m}</option>`).join('');
+  const modelesListe = modeles.length ? modeles : DEFAULT_MODELES;
+  selectModele.innerHTML = modelesListe.map(m => `<option value="${m}">${m}</option>`).join('');
   selectModele.value = rep.modele;
   
   // Remplir le select client
